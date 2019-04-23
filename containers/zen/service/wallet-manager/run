@@ -1,0 +1,60 @@
+#!/bin/sh
+PATH=/usr/local/bin:/usr/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/X11R6/bin
+export HOME=/home/zen
+printf "%s" "$(zen-cli listaddresses)" > ~/.zen/t_addresses
+
+echo "$(date)" > ~/.zen/last_wallet_check
+
+available=$(zen-cli getinfo 2>&1)
+if printf "%s" "$available" | grep "Loading block index"; then
+   echo "Loading block index" >> ~/.zen/last_wallet_check
+   sleep 60;
+   exit 1;
+fi
+if printf "%s" "$available" | grep "Verifying blocks"; then
+   echo "Verifying blocks" >> ~/.zen/last_wallet_check
+   sleep 60;
+   exit 2;
+fi
+if printf "%s" "$available" | grep "Activating best chain"; then
+   echo "Activating best chain" >> ~/.zen/last_wallet_check
+   sleep 60;
+   exit 3;
+fi
+
+z_primary=$(zen-cli z_listaddresses | jq -r '.[0]')
+z_secondary=$(zen-cli z_listaddresses | jq -r '.[1]')
+if [ "$z_primary" = "null" ] || [ -z "$z_primary" ]; then
+    zen-cli z_getnewaddress > /dev/null
+    z_primary=$(zen-cli z_listaddresses | jq -r '.[0]')
+    echo "Created z_address: $z_primary" >> ~/.zen/last_wallet_check
+else
+    echo "Found available z_address: $z_primary"  >> ~/.zen/last_wallet_check
+fi
+if [ "$z_secondary" = "null" ] || [ -z "$z_secondary" ]; then
+    zen-cli z_getnewaddress > /dev/null
+    z_secondary=$(zen-cli z_listaddresses | jq -r '.[1]')
+    echo "Created z_address: $z_secondary"  >> ~/.zen/last_wallet_check
+else
+    echo "Found available z_address: $z_secondary"  >> ~/.zen/last_wallet_check
+fi
+
+TRANSFERS=false
+for row in $(zen-cli listaddressgroupings | jq -c '.[] | select(.[] | .[1] > 0.049) | .[]'); do
+    TRANSFERS=true
+    t_primary=$(printf "%s" "$row" | jq .[0] -r)
+    t_balance=$(printf "%.8f" "$(printf "%s" "$row" | jq .[1] -r)")
+    t_half_balance=$(printf "%.8f" "$(printf "%s\n" "($t_balance - 0.0001) / 2" | bc -l)")
+    echo "Moving from: $t_primary to challenge addresses..."  >> ~/.zen/last_wallet_check
+    # shellcheck disable=2086
+    zen-cli z_sendmany $t_primary "[{\"address\": \"$z_primary\", \"amount\": $t_half_balance},{\"address\": \"$z_secondary\", \"amount\": $t_half_balance}]"
+    sleep 750 # wait 5 blocks for tx to get confirmed
+done
+
+if [ "$TRANSFERS" = "false" ]; then
+   echo "No address with balance over 0.049 found..."  >> ~/.zen/last_wallet_check
+fi
+
+echo "TOTAL BALANCE:" >> ~/.zen/last_wallet_check
+printf "%s" "$(zen-cli z_gettotalbalance)" >> ~/.zen/last_wallet_check
+sleep 60

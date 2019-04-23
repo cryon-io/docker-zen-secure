@@ -1,0 +1,47 @@
+#  Horizen Secure Node docker template
+#  Copyright © 2019 cryon.io
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published
+#  by the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#  Contact: cryi@tutanota.com
+
+version: "2.4"
+services:
+  autoheal:
+    restart: always
+    image: cryi/autoheal
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - COMPOSE_MODE=true
+      - AUTOHEAL_DELAY=30
+      - AUTOHEAL_INTERVAL=5
+      - STOP_TIMEOUT=120
+      
+  mn:
+    restart: always
+    init: true
+    stop_grace_period: 120s
+    build: ./containers/zen
+    volumes:
+      - "./data/zen:/home/zen/.zen:rw"
+      - "./data/zen-params:/home/zen/.zcash-params:rw"
+      - "./data/certs:/home/zen/certs:rw"
+      - "./data/tracker/config:/home/zen/nodetracker/config:rw"
+      - "./data/tracker/logs:/home/zen/nodetracker/log:rw"
+      - "./data/api.key:/home/zen/api.key:ro"
+    labels:
+      - autoheal=true
+    ports:
+      - "9033:9033"

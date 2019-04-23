@@ -1,0 +1,6 @@
+#!/bin/sh -e
+PATH=/usr/local/bin:/usr/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/X11R6/bin
+export HOME=/home/zen
+# pipe stderr to stdout and run app via uwsgi
+exec 2>&1
+exec zend

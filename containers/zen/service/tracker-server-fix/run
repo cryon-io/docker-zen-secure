@@ -1,0 +1,24 @@
+#!/bin/sh
+
+PATH=/usr/local/bin:/usr/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/X11R6/bin
+export HOME=/home/zen
+
+if [ "$(jq .secure.nodeid -r /home/zen/nodetracker/config/config.json)" = "null" ]; then
+    echo "'nodeid: null; found. Executing tracker fix..."
+    while true; do
+        echo "Waiting for nodeid"
+        if [ ! "$(jq .secure.nodeid -r /home/zen/nodetracker/config/config.json)" = "null" ];  then
+            # restart node tracker
+            PID=$(pgrep "node app.js" --full)
+            echo "killing node tracker"
+            kill $PID
+            sleep 3
+            [ "$PID" = "$(pgrep "node app.js" --full)" ] || break
+        fi
+        sleep 30
+    done
+fi
+
+while true; do 
+    sleep 30
+done
