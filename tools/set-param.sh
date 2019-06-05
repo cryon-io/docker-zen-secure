@@ -22,7 +22,8 @@ BASEDIR=$(dirname "$0")
 
 PARAM=$(echo "$1" | sed "s/=.*//")
 VALUE=$(echo "$1" | sed "s/[^>]*=//")
-
+# escape value for sed
+VALUE_FOR_SED=$(echo "$VALUE" | sed -e 's/[\/&]/\\&/g')
 
 # Sets value in json file (if file does not exist or invalid, it is recreated)
 # Params:
@@ -46,16 +47,16 @@ fi
 
 case $PARAM in
     ip)
-        TEMP=$(sed "s/externalip=.*/externalip=$VALUE/g" "$BASEDIR/../data/zen/zen.conf")
+        TEMP=$(sed "s/externalip=.*/externalip=$VALUE_FOR_SED/g" "$BASEDIR/../data/zen/zen.conf")
         printf "%s" "$TEMP" > "$BASEDIR/../data/zen/zen.conf"
-        TEMP=$(sed "s/      - ip=.*/      - ip=$VALUE/g" "$BASEDIR/../containers/certbot/docker-compose.yml")
+        TEMP=$(sed "s/      - ip=.*/      - ip=$VALUE_FOR_SED/g" "$BASEDIR/../containers/certbot/docker-compose.yml")
         printf "%s" "$TEMP" > "$BASEDIR/../containers/certbot/docker-compose.yml"
     ;;  
     PROJECT)
         printf "PROJECT=%s" "$VALUE" >  "$BASEDIR/../project_id"
     ;;
     bootstrap)
-        TEMP=$(sed "s/BOOTSTRAP_URL=.*/BOOTSTRAP_URL=\"$VALUE\"/g" "$BASEDIR/before-start.sh")
+        TEMP=$(sed "s/BOOTSTRAP_URL=.*/BOOTSTRAP_URL=\"$VALUE_FOR_SED\"/g" "$BASEDIR/before-start.sh")
         printf "%s" "$TEMP" > "$BASEDIR/before-start.sh"
     ;;
     stakeaddr|email|ipv|nodetype)
@@ -63,7 +64,7 @@ case $PARAM in
     ;;
     fqdn)
         set_json_file_value "$BASEDIR/../data/tracker/config/config.json" "$PARAM" "$VALUE"
-        TEMP=$(sed "s/      - fqdn=.*/      - fqdn=$VALUE/g" "$BASEDIR/../containers/certbot/docker-compose.yml")
+        TEMP=$(sed "s/      - fqdn=.*/      - fqdn=$VALUE_FOR_SED/g" "$BASEDIR/../containers/certbot/docker-compose.yml")
         printf "%s" "$TEMP" > "$BASEDIR/../containers/certbot/docker-compose.yml"
     ;;
     region)
