@@ -7,7 +7,7 @@ curl -sl https://letsencrypt.org/certs/letsencryptauthorityx3.pem.txt -o /usr/lo
 chmod 750 /usr/local/share/ca-certificates/isrg.crt
 chmod 750 /usr/local/share/ca-certificates/leauthx3.crt
 
-cp -f ../data/certs/chain.crt /usr/local/share/ca-certificates/chain.crt
+cp -f /home/zen/certs/chain.crt /usr/local/share/ca-certificates/chain.crt
 chmod 750 /usr/local/share/ca-certificates/chain.crt
 
 update-ca-certificates --fresh

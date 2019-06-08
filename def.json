@@ -1,5 +1,5 @@
 {
-    "version" : 0.202,
+    "version" : 0.203,
     "update-node": "tools/update-node.sh",
     "fs-permissions": "tools/fs-permissions.sh",
     "node-info": "tools/node-info.sh",
